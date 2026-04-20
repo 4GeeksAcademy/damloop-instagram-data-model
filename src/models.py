@@ -1,6 +1,6 @@
 import os
 import sys
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from eralchemy2 import render_er
@@ -21,8 +21,18 @@ class User(Base):
     posts = relationship("Post", backref="user")
     comments = relationship("Comment", backref="user")
     likes = relationship("Like", backref="user")
-    followers = relationship("Follow", foreign_keys="Follow.user_id")
-    following = relationship("Follow", foreign_keys="Follow.follower_id")
+
+    followers = relationship(
+        "Follow",
+        foreign_keys="Follow.user_id",
+        back_populates="user"
+    )
+
+    following = relationship(
+        "Follow",
+        foreign_keys="Follow.follower_id",
+        back_populates="follower"
+    )
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -76,14 +86,26 @@ class Like(Base):
 
 
 # -------------------------
-# FOLLOW (followers)
+# FOLLOW
 # -------------------------
 class Follow(Base):
     __tablename__ = 'follow'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))          # El que recibe el follow
-    follower_id = Column(Integer, ForeignKey('user.id'))      # El que sigue
+    user_id = Column(Integer, ForeignKey('user.id'))      # seguido
+    follower_id = Column(Integer, ForeignKey('user.id'))  # seguidor
+
+    user = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="followers"
+    )
+
+    follower = relationship(
+        "User",
+        foreign_keys=[follower_id],
+        back_populates="following"
+    )
 
     def __repr__(self):
         return f"<Follow {self.follower_id} -> {self.user_id}>"
